@@ -106,7 +106,7 @@ RELOAD=true
 
 ## 📊 Estructura del Proyecto
 
-```
+```bash
 python-genia-service/
 ├── pyproject.toml # Configuración Poetry
 ├── poetry.lock # Lock file de dependencias

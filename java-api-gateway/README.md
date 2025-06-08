@@ -81,6 +81,7 @@ curl -X POST http://localhost:8080/api/genia/query \
 | `LOGGING_LEVEL_COM_GENIA` | Level de logging | `DEBUG` |
 
 ## 🏗️ Estructura del Proyecto
+```bash
 src/
 ├── main/
 │ ├── java/com/genia/gateway/
@@ -95,3 +96,4 @@ src/
 │ └── resources/
 │ └── application.yml # Configuration
 └── test/ # Tests
+```
