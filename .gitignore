@@ -1,0 +1,32 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env.local
+.env.production
+
+# Docker
+.docker/
+
+# Python
+python-genia-service/.venv/
+python-genia-service/__pycache__/
+python-genia-service/*.pyc
+python-genia-service/.pytest_cache/
+
+# Java
+java-api-gateway/target/
+java-api-gateway/.mvn/
+java-api-gateway/mvnw
+java-api-gateway/mvnw.cmd

@@ -1,0 +1,49 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: genia-api-gateway
+  
+  # JSON configuration
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+
+# Python service configuration
+python:
+  service:
+    url: ${PYTHON_SERVICE_URL:http://localhost:8000}
+
+# Logging configuration
+logging:
+  level:
+    com.genia: DEBUG
+    org.springframework.web: INFO
+    org.springframework.boot: INFO
+    root: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+
+# Custom app info
+info:
+  app:
+    name: GenIA API Gateway
+    description: API Gateway para integración con GenIA
+    version: 1.0.0

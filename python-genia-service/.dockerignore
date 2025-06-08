@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+.mypy_cache
+.dmypy.json
+dmypy.json
+
+# Development files
+.env.local
+.env.development
+*.log
+
+# Documentation
+docs/
+README.md
+
+# Git
+.git/
+.gitignore

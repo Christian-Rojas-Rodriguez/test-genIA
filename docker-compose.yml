@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  python-service:
+    build: 
+      context: ./python-genia-service
+      dockerfile: Dockerfile
+    container_name: genia-python-service
+    ports:
+      - "8000:8000"
+    environment:
+      - GENIA_API_URL=${GENIA_API_URL:-https://api.genia.example.com}
+      - GENIA_API_KEY=${GENIA_API_KEY:-your-api-key}
+      - ENVIRONMENT=docker
+    volumes:
+      - ./python-genia-service/src:/app/src
+    networks:
+      - genia-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  java-gateway:
+    build: 
+      context: ./java-api-gateway
+      dockerfile: Dockerfile
+    container_name: genia-java-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - PYTHON_SERVICE_URL=http://python-service:8000
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      python-service:
+        condition: service_healthy
+    networks:
+      - genia-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  genia-network:
+    driver: bridge
+
+volumes:
+  maven-cache:
+    driver: local
