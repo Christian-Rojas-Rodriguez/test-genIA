@@ -17,9 +17,8 @@ class Settings:
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
     
-    # Configuración de GenIA API
-    GENIA_API_URL: str = os.getenv("GENIA_API_URL", "https://api.genia.example.com")
-    GENIA_API_KEY: str = os.getenv("GENIA_API_KEY", "your-api-key-here")
+    # Configuración de Google Gemini API
+    GENIA_API_KEY: str = os.getenv("GENIA_API_KEY")
     
     # Configuración de logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
@@ -29,7 +28,7 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     RELOAD: bool = os.getenv("RELOAD", "false").lower() == "true"
     
-    # Timeouts y límites
+    # Timeouts y límites (para la app, no para Google API)
     API_TIMEOUT: int = int(os.getenv("API_TIMEOUT", "30"))
     MAX_RETRIES: int = int(os.getenv("MAX_RETRIES", "3"))
     

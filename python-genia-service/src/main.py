@@ -1,11 +1,11 @@
 """
-Aplicación principal FastAPI para integración con GenIA.
+Aplicación principal FastAPI para integración con Google Gemini API.
 """
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .config import settings
-from .models import QueryRequest, QueryResponse, HealthResponse, ErrorResponse, ServiceStatus
-from .services import genia_service
+from config import settings
+from models import QueryRequest, QueryResponse, HealthResponse, ErrorResponse, ServiceStatus
+from services import genia_service
 import time
 import logging
 
@@ -18,7 +18,7 @@ def create_app() -> FastAPI:
     
     app = FastAPI(
         title=settings.APP_NAME,
-        description="Servicio de integración con GenIA API usando Poetry",
+        description="Servicio de integración con Google Gemini API (gemini-1.5-pro-002) usando Poetry",
         version=settings.APP_VERSION,
         docs_url="/docs" if settings.is_development else None,
         redoc_url="/redoc" if settings.is_development else None
@@ -44,6 +44,7 @@ async def startup_event():
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
+    logger.info(f"Google Gemini model: {genia_service.model_name}")
     
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -57,6 +58,7 @@ async def root():
         "message": f"{settings.APP_NAME} is running",
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
+        "model": genia_service.model_name,
         "docs_url": "/docs" if settings.is_development else "disabled"
     }
 
@@ -74,10 +76,10 @@ async def health_check():
 async def detailed_health_check():
     """Health check detallado incluyendo dependencias externas"""
     
-    # Verificar GenIA API
-    genia_healthy = await genia_service.health_check()
+    # Verificar Google Gemini API
+    gemini_healthy = await genia_service.health_check()
     
-    overall_status = ServiceStatus.HEALTHY if genia_healthy else ServiceStatus.DEGRADED
+    overall_status = ServiceStatus.HEALTHY if gemini_healthy else ServiceStatus.DEGRADED
     
     return {
         "status": overall_status,
@@ -85,21 +87,45 @@ async def detailed_health_check():
         "version": settings.APP_VERSION,
         "timestamp": time.time(),
         "dependencies": {
-            "genia_api": "healthy" if genia_healthy else "unhealthy"
+            "google_gemini": "healthy" if gemini_healthy else "unhealthy"
         },
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
+        "model": genia_service.model_name
     }
 
-@app.post("/query", response_model=QueryResponse)
-async def query_genia(request: QueryRequest):
+@app.get("/model/info", response_model=dict)
+async def get_model_info():
     """
-    Procesa una consulta enviándola a GenIA API real
+    Obtener información detallada del modelo Google Gemini configurado
+    """
+    try:
+        model_info = genia_service.get_model_info()
+        return {
+            "success": True,
+            "data": model_info,
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        logger.error(f"Error getting model info: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                error="model_info_error",
+                message=str(e),
+                timestamp=time.time()
+            ).dict()
+        )
+
+@app.post("/query", response_model=QueryResponse)
+async def query_gemini(request: QueryRequest):
+    """
+    Procesa una consulta enviándola a Google Gemini API (gemini-1.5-pro-002)
     
     Args:
-        request: Datos de la consulta
+        request: Datos de la consulta con prompt, max_tokens, temperature
         
     Returns:
-        QueryResponse: Respuesta de GenIA
+        QueryResponse: Respuesta de Google Gemini
         
     Raises:
         HTTPException: En caso de error
@@ -125,7 +151,7 @@ async def query_genia(request: QueryRequest):
 @app.post("/query/mock", response_model=QueryResponse)
 async def query_mock(request: QueryRequest):
     """
-    Endpoint mock para testing sin llamar a GenIA real
+    Endpoint mock para testing sin llamar a Google Gemini real
     
     Args:
         request: Datos de la consulta
@@ -164,9 +190,11 @@ async def get_config():
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
         "debug": settings.DEBUG,
-        "genia_api_url": settings.GENIA_API_URL,
+        "google_gemini_configured": bool(settings.GENIA_API_KEY),
+        "model": genia_service.model_name,
         "api_timeout": settings.API_TIMEOUT,
-        "max_retries": settings.MAX_RETRIES
+        "max_retries": settings.MAX_RETRIES,
+        "api_key_preview": f"{settings.GENIA_API_KEY[:10]}...{settings.GENIA_API_KEY[-10:]}" if settings.GENIA_API_KEY else "None"
     }
 
 if __name__ == "__main__":
@@ -175,7 +203,7 @@ if __name__ == "__main__":
     logger.info(f"Starting {settings.APP_NAME} manually")
     
     uvicorn.run(
-        "src.main:app",
+        "main:app",
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.RELOAD and settings.is_development,
