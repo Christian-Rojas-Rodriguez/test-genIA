@@ -7,12 +7,11 @@ import asyncio
 from typing import Optional, Dict, Any
 from config import settings
 from models import QueryRequest, QueryResponse
-import logging
+from logging_config import get_logger, log_api_call, log_performance
 from google import genai
 
-# Configurar logging
-logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL))
-logger = logging.getLogger(__name__)
+# Obtener logger específico para este módulo
+logger = get_logger(__name__)
 
 class GeniaAPIService:
     """
@@ -26,16 +25,22 @@ class GeniaAPIService:
         self.max_retries = settings.MAX_RETRIES
         self.model_name = "gemini-1.5-flash"
         
+        logger.info(f"🔧 Initializing GeniaAPIService with model: {self.model_name}")
+        logger.debug(f"Service configuration: timeout={self.timeout}s, max_retries={self.max_retries}")
+        
         # Configurar el cliente oficial de Google Gemini
         if self.api_key:
             try:
+                logger.debug("Setting up Google Gemini client...")
                 self.client = genai.Client(api_key=self.api_key)
-                logger.info(f"Google Gemini client configured successfully with model: {self.model_name}")
+                logger.info(f"✅ Google Gemini client configured successfully")
+                logger.debug(f"API Key preview: {self.api_key[:10]}...{self.api_key[-5:]}")
             except Exception as e:
-                logger.error(f"Failed to configure Google Gemini client: {e}")
+                logger.error(f"❌ Failed to configure Google Gemini client: {e}")
+                logger.debug(f"Error type: {type(e).__name__}")
                 self.client = None
         else:
-            logger.warning("No GENIA_API_KEY provided. Service will work in mock mode only.")
+            logger.warning("⚠️  No GENIA_API_KEY provided. Service will work in mock mode only.")
             self.client = None
     
     async def query(self, request: QueryRequest) -> QueryResponse:
@@ -52,17 +57,23 @@ class GeniaAPIService:
             Exception: Error en la comunicación con Google Gemini
         """
         if not self.client:
+            logger.error("❌ Google Gemini client not configured")
             raise Exception("Google Gemini client not configured. Check your GENIA_API_KEY.")
         
         start_time = time.time()
+        call_id = f"gemini_{int(start_time * 1000)}"
         
         try:
-            logger.info(f"Calling Google Gemini API ({self.model_name}) with prompt: {request.prompt[:50]}...")
+            logger.info(f"🚀 [{call_id}] Calling Google Gemini API ({self.model_name})")
+            logger.debug(f"[{call_id}] Prompt preview: '{request.prompt[:100]}...'")
+            logger.debug(f"[{call_id}] Prompt length: {len(request.prompt)} characters")
             
             # Preparar parámetros según la documentación oficial
             generation_config = self._build_generation_config(request)
+            logger.debug(f"[{call_id}] Generation config: {generation_config}")
             
             # Ejecutar la llamada en un thread pool para hacerla async
+            logger.debug(f"[{call_id}] Executing API call...")
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None, 
@@ -72,24 +83,44 @@ class GeniaAPIService:
             )
             
             processing_time = time.time() - start_time
+            estimated_tokens = self._estimate_tokens(response.text)
             
-            logger.info(f"Google Gemini API responded successfully in {processing_time:.2f}s")
+            # Log métricas de performance
+            log_performance(
+                f"gemini_api_call_{call_id}",
+                processing_time,
+                {
+                    "model": self.model_name,
+                    "prompt_length": len(request.prompt),
+                    "response_length": len(response.text),
+                    "estimated_tokens": estimated_tokens
+                }
+            )
+            
+            logger.info(f"✅ [{call_id}] Google Gemini API success - Time: {processing_time:.3f}s, Tokens: {estimated_tokens}")
             
             return QueryResponse(
                 response=response.text,
-                tokens_used=self._estimate_tokens(response.text),
+                tokens_used=estimated_tokens,
                 model=self.model_name,
                 processing_time=processing_time
             )
                 
         except Exception as e:
-            logger.error(f"Error calling Google Gemini API: {e}")
-            # Incluir más detalles del error para debugging
+            processing_time = time.time() - start_time
             error_details = {
                 "model": self.model_name,
                 "prompt_length": len(request.prompt),
-                "error_type": type(e).__name__
+                "error_type": type(e).__name__,
+                "processing_time": processing_time
             }
+            
+            logger.error(f"❌ [{call_id}] Google Gemini API failed: {str(e)} - Time: {processing_time:.3f}s")
+            logger.debug(f"[{call_id}] Error details: {error_details}")
+            
+            # Log la llamada fallida para monitoring
+            log_api_call("POST", f"google-gemini/{self.model_name}", 500, processing_time)
+            
             raise Exception(f"Google Gemini API error: {str(e)}. Details: {error_details}")
     
     def _build_generation_config(self, request: QueryRequest) -> Optional[Dict[str, Any]]:

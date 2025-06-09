@@ -11,6 +11,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+python-genia-service/logs/
 
 # Environment variables
 .env
