@@ -29,4 +29,4 @@ python-genia-service/.pytest_cache/
 java-api-gateway/target/
 java-api-gateway/.mvn/
 java-api-gateway/mvnw
-java-api-gateway/mvnw.cmd
+java-api-gateway/mvnw.cmd.env
