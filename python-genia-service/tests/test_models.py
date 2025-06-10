@@ -69,7 +69,8 @@ class TestQueryRequest:
         with pytest.raises(ValidationError) as excinfo:
             QueryRequest(prompt="Test", max_tokens=10000)
         
-        assert "max_tokens cannot exceed 8192" in str(excinfo.value)
+        # En Pydantic v2, la validación del Field constraint se ejecuta primero
+        assert "Input should be less than or equal to 8192" in str(excinfo.value)
     
     @pytest.mark.unit
     def test_query_request_max_tokens_validation_zero(self):
