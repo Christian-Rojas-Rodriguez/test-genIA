@@ -1,10 +1,19 @@
 """
-Paquete principal del servicio GenIA.
+Inicialización del paquete src.
+Expone los componentes principales para facilitar las importaciones.
 """
-from .config import settings
-from .models import QueryRequest, QueryResponse, HealthResponse
-from .services import genia_service
-from .main import app
 
-__version__ = "1.0.0"
+# Importar configuraciones
+from config import settings
+
+# Importar modelos principales
+from models import QueryRequest, QueryResponse, HealthResponse
+
+# Importar servicios
+from services import genia_service
+
+# Importar aplicación principal
+from main import app
+
+# Definir qué se exporta cuando se hace 'from src import *'
 __all__ = ["settings", "QueryRequest", "QueryResponse", "HealthResponse", "genia_service", "app"]
