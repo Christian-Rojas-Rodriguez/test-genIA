@@ -166,7 +166,7 @@ async def detailed_health_check():
                 error="health_check_failed",
                 message=str(e),
                 timestamp=time.time()
-            ).dict()
+            ).model_dump()
         )
 
 @app.get("/model/info", response_model=dict)
@@ -189,7 +189,7 @@ async def get_model_info():
                 error="model_info_error",
                 message=str(e),
                 timestamp=time.time()
-            ).dict()
+            ).model_dump()
         )
 
 @app.post("/query", response_model=QueryResponse)
@@ -242,7 +242,7 @@ async def query_gemini(request: QueryRequest):
                 message=str(e),
                 timestamp=time.time(),
                 details={"request_id": request_id, "processing_time": processing_time}
-            ).dict()
+            ).model_dump()
         )
 
 @app.post("/query/mock", response_model=QueryResponse)
@@ -271,7 +271,7 @@ async def query_mock(request: QueryRequest):
                 error="mock_query_error",
                 message=str(e),
                 timestamp=time.time()
-            ).dict()
+            ).model_dump()
         )
 
 @app.get("/config", response_model=dict)

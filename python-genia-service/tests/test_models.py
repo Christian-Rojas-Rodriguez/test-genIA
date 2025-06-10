@@ -53,7 +53,7 @@ class TestQueryRequest:
         with pytest.raises(ValidationError) as excinfo:
             QueryRequest(prompt="")
         
-        assert "cannot be empty" in str(excinfo.value)
+        assert "String should have at least 1 character" in str(excinfo.value)
     
     @pytest.mark.unit
     def test_query_request_prompt_validation_whitespace(self):
@@ -61,7 +61,7 @@ class TestQueryRequest:
         with pytest.raises(ValidationError) as excinfo:
             QueryRequest(prompt="   ")
         
-        assert "cannot be empty" in str(excinfo.value)
+        assert "Prompt cannot be empty" in str(excinfo.value)
     
     @pytest.mark.unit
     def test_query_request_max_tokens_validation_too_high(self):
@@ -69,7 +69,7 @@ class TestQueryRequest:
         with pytest.raises(ValidationError) as excinfo:
             QueryRequest(prompt="Test", max_tokens=10000)
         
-        assert "cannot exceed 8192" in str(excinfo.value)
+        assert "max_tokens cannot exceed 8192" in str(excinfo.value)
     
     @pytest.mark.unit
     def test_query_request_max_tokens_validation_zero(self):
@@ -369,7 +369,7 @@ class TestModelsSerialization:
             temperature=0.8
         )
         
-        json_data = request.dict()
+        json_data = request.model_dump()
         assert json_data["prompt"] == "Test prompt"
         assert json_data["max_tokens"] == 100
         assert json_data["temperature"] == 0.8
@@ -384,7 +384,7 @@ class TestModelsSerialization:
             processing_time=1.0
         )
         
-        json_data = response.dict()
+        json_data = response.model_dump()
         assert json_data["response"] == "Test response"
         assert json_data["tokens_used"] == 50
         assert json_data["model"] == "test-model"
@@ -401,7 +401,7 @@ class TestModelsSerialization:
             limits=ModelLimits()
         )
         
-        json_data = model_info.dict()
+        json_data = model_info.model_dump()
         assert json_data["model_name"] == "test-model"
         assert json_data["client_configured"] is True
         assert json_data["api_key_set"] is False

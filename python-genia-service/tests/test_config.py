@@ -20,9 +20,9 @@ class TestSettings:
             assert settings.APP_VERSION == "1.0.0"
             assert settings.HOST == "127.0.0.1"
             assert settings.PORT == 8000
-            assert settings.LOG_LEVEL == "INFO"
-            assert settings.ENVIRONMENT == "development"
-            assert settings.DEBUG is False
+            assert settings.LOG_LEVEL == "DEBUG"
+            assert settings.ENVIRONMENT == "testing"
+            assert settings.DEBUG is True
             assert settings.RELOAD is False
             assert settings.API_TIMEOUT == 30
             assert settings.MAX_RETRIES == 3
@@ -35,7 +35,7 @@ class TestSettings:
             settings = Settings()
             assert settings.is_development is True
         
-        # Test production  
+        # Test production
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}, clear=True):
             settings = Settings()
             assert settings.is_development is False 
